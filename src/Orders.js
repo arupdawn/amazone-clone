@@ -1,0 +1,43 @@
+import React, { useState, useEffect } from "react";
+import { db } from "./firebase";
+import { useStateValue } from "./StateProvider";
+import "./Orders.css";
+import Order from "./Order";
+
+function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [{ basket, user }, dispatch] = useStateValue();  // firebase deploy --only hosting
+
+  useEffect(() => {
+    if (user) {
+      db.collection('users')
+        .doc(user?.uid)
+        .collection('orders')
+        .orderBy('created', 'desc')
+        .onSnapshot((snapshot) =>
+          setOrders(
+            snapshot.docs.map((doc) => ({
+              id: doc.id,
+              data: doc.data()
+            }))
+          )
+        )
+    } else {
+      setOrders([]);
+    }
+  }, [user]);
+
+  return (
+    <div className="orders">
+      <h1>{user ? "Your Orders !!" : " Please login to see your orders here !!"}</h1>
+
+      <div className="orders__order">
+        {orders?.map((order) => (
+          <Order order={order} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Orders;
